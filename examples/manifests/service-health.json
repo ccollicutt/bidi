@@ -1,0 +1,18 @@
+{
+  "manifest_version": 1,
+  "plugin_id": "service-health",
+  "version": "1.0.0",
+  "api_version": 1,
+  "publisher_key_id": "operations-2026",
+  "artifacts": [],
+  "actions": [{
+    "name": "service-health.check",
+    "description": "Check a locally configured service ID",
+    "input_schema": {"type":"object","required":["service_id"],"properties":{"service_id":{"const":"local-http"}},"additionalProperties":false},
+    "output_schema": {"type":"object","required":["service_id","status","latency_ms"],"properties":{"service_id":{"const":"local-http"},"status":{"type":"integer"},"latency_ms":{"type":"integer"}},"additionalProperties":false},
+    "timeout_seconds": 5,
+    "max_result_bytes": 4096,
+    "read_only": true
+  }],
+  "capabilities": {"filesystem_read": [], "network": ["127.0.0.1:18080"]}
+}

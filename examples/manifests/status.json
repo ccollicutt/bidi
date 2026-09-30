@@ -1,0 +1,18 @@
+{
+  "manifest_version": 1,
+  "plugin_id": "status",
+  "version": "1.0.0",
+  "api_version": 1,
+  "publisher_key_id": "operations-2026",
+  "artifacts": [],
+  "actions": [{
+    "name": "status.get",
+    "description": "Return agent identity and platform",
+    "input_schema": {"type":"object","required":["agent"],"properties":{"agent":{"type":"string","minLength":1,"maxLength":64}},"additionalProperties":false},
+    "output_schema": {"type":"object","required":["text"],"properties":{"text":{"type":"string"}},"additionalProperties":false},
+    "timeout_seconds": 5,
+    "max_result_bytes": 1024,
+    "read_only": true
+  }],
+  "capabilities": {"filesystem_read": [], "network": []}
+}

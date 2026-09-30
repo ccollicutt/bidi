@@ -1,0 +1,26 @@
+# Built binaries and Go test artifacts
+/bin/
+*.test
+
+# Local plugin releases, publisher keys, catalogs, and agent installs
+/.dev-plugins/
+
+# Development TLS identities and private signing keys
+/certs/
+*.key
+
+# Runtime logs and profiling/coverage output
+*.log
+/coverage/
+/coverage*.out
+*.prof
+
+# Temporary permission files created when provisioning agents
+/.permissions-*
+
+# Local guidance and product requirements
+/GOLANG.md
+/prds/
+
+# Local agent authorization
+/permissions.json
