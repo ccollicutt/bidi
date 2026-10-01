@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/ccollicutt/bidi/internal/plugin"
+	"github.com/ccollicutt/bidi/internal/traffic"
 	"github.com/ccollicutt/bidi/internal/wire"
 )
 
@@ -59,15 +60,30 @@ func Run(ctx context.Context, cfg Config) error {
 	if cfg.Logger == nil {
 		cfg.Logger = log.Default()
 	}
-	tlsCfg := &tls.Config{MinVersion: tls.VersionTLS12, RootCAs: roots, Certificates: []tls.Certificate{cert}}
+	serverName, _, err := net.SplitHostPort(cfg.Address)
+	if err != nil {
+		return fmt.Errorf("server address: %w", err)
+	}
+	tlsCfg := &tls.Config{MinVersion: tls.VersionTLS12, RootCAs: roots, Certificates: []tls.Certificate{cert}, ServerName: serverName}
 	delay := time.Second
 	for ctx.Err() == nil {
 		dialer := &net.Dialer{Timeout: 5 * time.Second, KeepAlive: 30 * time.Second}
-		conn, err := tls.DialWithDialer(dialer, "tcp", cfg.Address, tlsCfg)
+		raw, err := dialer.DialContext(ctx, "tcp", cfg.Address)
 		if err == nil {
-			cfg.Logger.Printf("connected to %s", cfg.Address)
-			delay = time.Second
-			err = session(ctx, conn, cfg)
+			counter, counterErr := traffic.NewConn(raw)
+			if counterErr != nil {
+				raw.Close()
+				return counterErr
+			}
+			conn := tls.Client(counter, tlsCfg)
+			handshakeCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			err = conn.HandshakeContext(handshakeCtx)
+			cancel()
+			if err == nil {
+				cfg.Logger.Printf("connected to %s", cfg.Address)
+				delay = time.Second
+				err = session(ctx, conn, cfg, counter)
+			}
 			conn.Close()
 		}
 		if ctx.Err() != nil {
@@ -91,12 +107,15 @@ func Run(ctx context.Context, cfg Config) error {
 	return nil
 }
 
-func session(ctx context.Context, conn net.Conn, cfg Config) error {
+func session(ctx context.Context, conn net.Conn, cfg Config, counter *traffic.Conn) error {
 	if cfg.Plugins != nil {
 		defer cfg.Plugins.ResetTransfers()
 	}
 	peer := wire.NewPeer(conn)
 	send := func(message wire.Message) error {
+		if message.Type == "hello" || message.Type == "ping" || message.Type == "pong" {
+			message.Traffic = counter.Snapshot()
+		}
 		if err := conn.SetWriteDeadline(time.Now().Add(10 * time.Second)); err != nil {
 			return err
 		}

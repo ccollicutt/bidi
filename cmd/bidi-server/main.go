@@ -141,6 +141,10 @@ func main() {
 						connection.Agent, connection.RemoteAddress, connection.LocalAddress,
 						connection.CertificateSerial, connection.ConnectedAt.Local().Format("2006-01-02 15:04:05 MST"),
 						time.Since(connection.ConnectedAt).Truncate(time.Second))
+					if sample := connection.Traffic; sample != nil {
+						fmt.Printf("    traffic session=%s sampled=%s agent-sent=%d B agent-received=%d B rates=%.1f/%.1f B/s (sent/received)\n",
+							sample.SessionID, sample.ReceivedAt.Format(time.RFC3339), sample.SentBytes, sample.ReceivedBytes, sample.SentBytesPerSecond, sample.ReceivedBytesPerSecond)
+					}
 				}
 			case "quit":
 				stop()

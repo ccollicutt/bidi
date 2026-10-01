@@ -24,3 +24,7 @@
 
 # Local agent authorization
 /permissions.json
+
+# Local packet captures and connection proof reports
+/.connection-proof/
+__pycache__/

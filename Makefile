@@ -3,7 +3,7 @@ TEXT ?= hello
 INPUT ?= {}
 export AGENT TEXT INPUT ACTION PLUGIN
 
-.PHONY: help build test test-e2e test-race certs agent server client-1 client-2 dev-plugins status echo host-facts disk-usage service-health uptime run plugin-add health-service plugins clean
+.PHONY: help build test test-e2e test-race certs agent server client-1 client-2 dev-plugins status echo host-facts disk-usage service-health uptime run plugin-add health-service plugins clean prove-connection
 help:
 	@echo 'Make targets:'
 	@echo '  make help                 Show this help (also the default)'
@@ -14,6 +14,7 @@ help:
 	@echo '  make client-2             Build and start agent-2'
 	@echo '  make dev-plugins          Prepare signed development plugins'
 	@echo '  make build                Build server, client, control, and release binaries'
+	@echo '  make prove-connection     Capture an isolated demo and graph packets and actions'
 	@echo '  make test                 Run Go tests'
 	@echo '  make test-e2e             Run mTLS and plugin lifecycle tests'
 	@echo '  make test-race            Run tests with the race detector'
@@ -68,3 +69,6 @@ plugin-add: build dev-plugins
 	bash scripts/dev-plugin-add.sh
 clean:
 	rm -f bin/bidi-server bin/bidi-client bin/bidi-control bin/plugin-release
+
+prove-connection: build
+	python3 scripts/prove-connection.py

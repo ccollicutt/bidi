@@ -88,4 +88,19 @@ make client-2
 
 Target it with `make status AGENT=agent-2`. Use `make help` for more commands and `make test` to run the tests.
 
+Agents include cumulative bytes sent and received in their existing heartbeats. The server timestamps samples, records them in `audit.log`, and shows the latest totals and interval rates with `connections`. Counters reset with a new session ID after reconnecting. Counts include TLS overhead, but exclude TCP/IP headers and retransmissions.
+
+## Testing the single connection
+
+```sh
+sudo -v
+make prove-connection
+```
+
+Example results: **one TCP stream, one handshake, one authenticated session, and 1,544 packets**.
+
+![Packet sizes and action times on a single connection](docs/images/connection-proof.svg)
+
+Open `.connection-proof/connection.html` for the interactive graph.
+
 [MIT license](LICENSE).

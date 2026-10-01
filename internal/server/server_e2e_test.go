@@ -120,6 +120,14 @@ func TestBidirectionalTrafficUsesOneConnection(t *testing.T) {
 	if len(connections) != 1 || connections[0].Agent != "agent-1" || connections[0].RemoteAddress == "" || connections[0].LocalAddress == "" || connections[0].CertificateSerial != "3" {
 		t.Fatalf("unexpected connection details: %+v", connections)
 	}
+	waitFor(t, "initial traffic sample", func() bool {
+		rows := s.Connections()
+		return len(rows) == 1 && rows[0].Traffic != nil
+	})
+	reading := s.Connections()[0].Traffic
+	if reading.SentBytes == 0 || reading.ReceivedBytes == 0 || reading.SessionID == "" {
+		t.Fatalf("TLS traffic counts: %+v", reading)
+	}
 	input <- "from-agent"
 	if err := s.SendMessage("agent-1", "plain-message-from-server"); err != nil {
 		t.Fatal(err)

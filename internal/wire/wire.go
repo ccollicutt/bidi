@@ -8,12 +8,15 @@ import (
 	"fmt"
 	"io"
 	"sync"
+
+	"github.com/ccollicutt/bidi/internal/traffic"
 )
 
 const MaxMessage = 64 * 1024
 
 // Message carries chat, requests, and results on a single TLS connection.
 type Message struct {
+	Traffic        *traffic.Snapshot   `json:"traffic,omitempty"`
 	Type           string              `json:"type"`
 	ID             string              `json:"id,omitempty"`
 	Action         string              `json:"action,omitempty"`

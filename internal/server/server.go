@@ -66,6 +66,7 @@ type agent struct {
 	active         map[string]string
 	pluginOffers   []wire.Message
 	pluginInFlight bool
+	traffic        *TrafficReading
 }
 
 // ConnectionInfo describes an active authenticated agent connection.
@@ -75,6 +76,7 @@ type ConnectionInfo struct {
 	LocalAddress      string
 	CertificateSerial string
 	ConnectedAt       time.Time
+	Traffic           *TrafficReading
 }
 
 func New(cfg Config) *Server {
@@ -190,6 +192,7 @@ func (s *Server) handle(conn net.Conn) {
 	s.agents[name] = a
 	s.mu.Unlock()
 	s.audit("connected", map[string]string{"agent": name, "certificate_serial": cert.SerialNumber.String()})
+	s.recordTraffic(a, hello.Traffic)
 	defer func() {
 		s.mu.Lock()
 		if s.agents[name] == a {
@@ -257,6 +260,7 @@ func (s *Server) handle(conn net.Conn) {
 				s.cfg.Logger.Printf("result %s from %s (%s): %s", m.ID, name, m.Action, m.Text)
 			}
 		case "ping":
+			s.recordTraffic(a, m.Traffic)
 			select {
 			case a.outgoing <- wire.Message{Type: "pong", ID: m.ID}:
 			default:
@@ -264,6 +268,7 @@ func (s *Server) handle(conn net.Conn) {
 				return
 			}
 		case "pong":
+			s.recordTraffic(a, m.Traffic)
 		case "capabilities", "catalog_request", "plugin_chunk_request", "plugin_install_result", "plugin_activate_result", "plugin_rollback_result":
 			s.handlePluginMessage(a, m)
 		default:
@@ -293,6 +298,7 @@ func (s *Server) Connections() []ConnectionInfo {
 			LocalAddress:      a.conn.LocalAddr().String(),
 			CertificateSerial: a.serial,
 			ConnectedAt:       a.connected,
+			Traffic:           a.traffic,
 		})
 	}
 	return out
